@@ -4,7 +4,7 @@ plugins {
 }
 group = 'dev.holdmytorch'
 version = '0.1.0'
-base.archivesName = 'hold-my-torch-1.21.1-neoforge'
+base.archivesName = 'hold-my-torch'
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 sourceSets.main.java.srcDir '../common/src/main/java'
 sourceSets.main.resources.srcDir '../common/src/main/resources'
@@ -19,4 +19,7 @@ tasks.named('processResources') {
     inputs.property('omitForgeRefmap', true)
     filesMatching('holdmytorch.mixins.json') { filter { line -> line.contains('"refmap"') ? '' : line } }
 }
-tasks.named('jar') { from('../LICENSE') }
+tasks.named('jar') {
+    archiveClassifier = 'mc1.21.1-neoforge'
+    from('../LICENSE')
+}

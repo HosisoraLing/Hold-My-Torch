@@ -5,7 +5,7 @@ plugins {
 }
 group = 'dev.holdmytorch'
 version = '0.1.0'
-base.archivesName = 'hold-my-torch-1.20.1-forge'
+base.archivesName = 'hold-my-torch'
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 sourceSets.main.java.srcDir '../common/src/main/java'
 sourceSets.main.resources.srcDir '../common/src/main/resources'
@@ -32,6 +32,7 @@ mixin {
 }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 17 }
 tasks.named('jar') {
+    archiveClassifier = 'mc1.20.1-forge'
     from('../LICENSE')
     manifest.attributes('MixinConfigs': 'holdmytorch.mixins.json')
     finalizedBy 'reobfJar'

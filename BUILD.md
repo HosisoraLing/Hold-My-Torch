@@ -24,8 +24,10 @@ sh gradlew -p neoforge build
 
 产物：
 
-- `forge/build/libs/hold-my-torch-1.20.1-forge-0.1.0.jar`，ForgeGradle 执行 `reobfJar` 后才是发布文件；不要把未重映射的中间文件拿去安装。
-- `neoforge/build/libs/hold-my-torch-1.21.1-neoforge-0.1.0.jar`。
+- `forge/build/libs/hold-my-torch-0.1.0-mc1.20.1-forge.jar`，ForgeGradle 执行 `reobfJar` 后才是发布文件；不要把未重映射的中间文件拿去安装。
+- `neoforge/build/libs/hold-my-torch-0.1.0-mc1.21.1-neoforge.jar`。
+
+JAR 采用 `模组名-模组版本-mc游戏版本-加载器.jar` 命名。
 
 固定构建基线：Forge **47.3.0** / ForgeGradle **6.0.36**，NeoForge **21.1.228** / ModDevGradle **2.0.141**。这些基线不等于已经逐个测试全部 47.x / 21.1.x 小版本。
 
