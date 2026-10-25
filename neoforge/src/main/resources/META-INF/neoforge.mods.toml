@@ -1,0 +1,20 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="AGPL-3.0-only"
+[[mods]]
+modId="holdmytorch"
+version="0.1.0"
+displayName="Hold My Torch!"
+description='''Client-side input confirmation for bright placeable items, dropping and registered key mappings.'''
+[[mixins]]
+config="holdmytorch.mixins.json"
+[[dependencies.holdmytorch]]
+modId="neoforge"
+type="required"
+versionRange="[21.1,21.2)"
+side="CLIENT"
+[[dependencies.holdmytorch]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1]"
+side="CLIENT"
