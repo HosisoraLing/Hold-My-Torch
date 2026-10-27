@@ -48,13 +48,14 @@ public final class InputFilter {
         if (!LightSources.protectedItem(mc.player.getMainHandItem())
                 && !LightSources.protectedItem(mc.player.getOffhandItem())) return false;
         if (mc.player.isSecondaryUseActive()) return true;
+        Block block = mc.level.getBlockState(hit.getBlockPos()).getBlock();
+        // Let modded block interactions run normally, including inherited implementations.
+        if (!BuiltInRegistries.BLOCK.getKey(block).getNamespace().equals("minecraft"))
+            return !BlockInteractions.hasOverride(block.getClass());
         // A custom BlockItem may implement onItemUseFirst before block interaction.
         if ((LightSources.protectedItem(mc.player.getMainHandItem()) && !BuiltInRegistries.ITEM.getKey(mc.player.getMainHandItem().getItem()).getNamespace().equals("minecraft"))
                 || (LightSources.protectedItem(mc.player.getOffhandItem()) && !BuiltInRegistries.ITEM.getKey(mc.player.getOffhandItem().getItem()).getNamespace().equals("minecraft"))) return true;
-        Block block = mc.level.getBlockState(hit.getBlockPos()).getBlock();
         // Do not call use/useItemOn speculatively: those methods can mutate the world.
-        // ponytail: known vanilla interactions only; unknown mod blocks require confirmation.
-        if (!BuiltInRegistries.BLOCK.getKey(block).getNamespace().equals("minecraft")) return true;
         Class<?> type = block.getClass();
         return !((type == DoorBlock.class && block != Blocks.IRON_DOOR)
                 || (type == TrapDoorBlock.class && block != Blocks.IRON_TRAPDOOR)
