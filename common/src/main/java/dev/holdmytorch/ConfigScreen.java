@@ -85,19 +85,20 @@ public final class ConfigScreen extends Screen {
             ClientConfig.Rule r = section.equals("torch") ? c.torch : section.equals("drop") ? c.drop : c.keys.get(selectedKey);
             bool("enabled", () -> r.enabled, () -> r.enabled = !r.enabled, true);
             choice("mode", () -> tr("mode." + r.mode.name().toLowerCase(java.util.Locale.ROOT)),
-                    () -> r.mode = Confirmation.Mode.values()[(r.mode.ordinal() + 1) % 3],
+                    () -> { r.mode = Confirmation.Mode.values()[(r.mode.ordinal() + 1) % 3]; rebuildWidgets(); },
                     () -> r.mode = Confirmation.Mode.HOLD, () -> r.mode != Confirmation.Mode.HOLD);
-            number("hold", () -> r.holdMs, value -> r.holdMs = value, 500, 100, 10000);
-            number("double", () -> r.doubleMs, value -> r.doubleMs = value, 300, 100, 2000);
-            choice("confirm", () -> capturing == r ? tr("capture") : InputConstants.getKey(r.confirmKey).getDisplayName(),
+            if (r.mode == Confirmation.Mode.HOLD) number("hold", () -> r.holdMs, value -> r.holdMs = value, 500, 100, 10000);
+            if (r.mode == Confirmation.Mode.DOUBLE_TAP) number("double", () -> r.doubleMs, value -> r.doubleMs = value, 300, 100, 2000);
+            if (r.mode == Confirmation.Mode.CONFIRM_KEY) choice("confirm", () -> capturing == r ? tr("capture") : InputConstants.getKey(r.confirmKey).getDisplayName(),
                     () -> { capturing = r; rebuildWidgets(); }, () -> { r.confirmKey = "key.keyboard.left.alt"; capturing = null; },
                     () -> !r.confirmKey.equals("key.keyboard.left.alt"));
             if (section.equals("torch")) {
+                bool("main_hand", () -> c.protectMainHand, () -> c.protectMainHand = !c.protectMainHand, false);
                 number("brightness", () -> c.brightnessThreshold, value -> c.brightnessThreshold = value, 12, 0, 15);
                 bool("dynamic", () -> c.dynamicLights, () -> c.dynamicLights = !c.dynamicLights, true);
             }
             button(tr("module_reset"), b -> {
-                if (section.equals("torch")) { c.torch = new ClientConfig.Rule(); c.brightnessThreshold = 12; c.dynamicLights = true; }
+                if (section.equals("torch")) { c.torch = new ClientConfig.Rule(); c.protectMainHand = false; c.brightnessThreshold = 12; c.dynamicLights = true; }
                 else if (section.equals("drop")) c.drop = new ClientConfig.Rule();
                 else c.keys.put(selectedKey, new ClientConfig.Rule());
                 capturing = null; rebuildWidgets();

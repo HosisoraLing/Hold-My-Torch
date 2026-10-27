@@ -15,6 +15,7 @@ public final class ClientConfig {
     public static ClientConfig current = new ClientConfig();
     private static Path file;
     public Rule torch = new Rule();
+    public boolean protectMainHand = false;
     public Rule drop = new Rule();
     public boolean customEnabled = true;
     public int brightnessThreshold = 12;

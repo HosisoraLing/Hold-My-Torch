@@ -28,5 +28,6 @@
   "holdmytorch.remove_rule": "移除这条保护规则",
   "holdmytorch.save_failed": "保存失败，请查看游戏日志；修改仍保留在内存中。",
   "holdmytorch.number_hint": "红色输入无效，不会应用；保留最后一个有效值。",
-  "holdmytorch.unsupported_toggle": "暂不支持切换型快捷键；此快捷键不受保护。"
+  "holdmytorch.unsupported_toggle": "暂不支持切换型快捷键；此快捷键不受保护。",
+  "holdmytorch.main_hand": "保护主手高亮物品"
 }

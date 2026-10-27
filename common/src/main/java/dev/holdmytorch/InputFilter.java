@@ -46,6 +46,7 @@ public final class InputFilter {
 
     private static boolean placementCandidate(InteractionHand hand) {
         Minecraft mc = Minecraft.getInstance();
+        if (hand == InteractionHand.MAIN_HAND && !ClientConfig.current.protectMainHand) return false;
         if (!(mc.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK || mc.player.isSpectator()) return false;
         if (!LightSources.protectedItem(mc.player.getItemInHand(hand))) return false;
         // A non-light main hand already had its chance to interact with this block.
@@ -102,7 +103,7 @@ public final class InputFilter {
         ClientConfig config = ClientConfig.current;
         ClientConfig.Rule custom = config.customEnabled ? config.keys.get(mc.options.keyUse.getName()) : null;
         boolean enabled = config.torch.enabled && (custom == null || !custom.enabled)
-                && (LightSources.protectedItem(mc.player.getMainHandItem())
+                && ((config.protectMainHand && LightSources.protectedItem(mc.player.getMainHandItem()))
                 || LightSources.protectedItem(mc.player.getOffhandItem()));
         return gesture("holdmytorch:torch", enabled ? config.torch : null, context(mc.options.keyUse));
     }

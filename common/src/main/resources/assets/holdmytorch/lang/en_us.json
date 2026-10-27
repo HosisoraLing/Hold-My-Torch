@@ -28,5 +28,6 @@
   "holdmytorch.remove_rule": "Remove protection rule",
   "holdmytorch.save_failed": "Save failed. Check the game log; changes are still in memory.",
   "holdmytorch.number_hint": "Red input is invalid and is not applied. The last valid value is kept.",
-  "holdmytorch.unsupported_toggle": "Toggle key mappings are not supported. No protection is applied."
+  "holdmytorch.unsupported_toggle": "Toggle key mappings are not supported. No protection is applied.",
+  "holdmytorch.main_hand": "Protect main-hand bright items"
 }
