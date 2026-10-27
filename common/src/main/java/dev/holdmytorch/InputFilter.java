@@ -22,6 +22,7 @@ public final class InputFilter {
         final ClientConfig.Rule rule;
         final String context;
         boolean down;
+        boolean notified;
         Gesture(ClientConfig.Rule rule, String context) { this.rule = rule; this.context = context; }
     }
 
@@ -30,7 +31,7 @@ public final class InputFilter {
         return mc != null && mc.player != null && mc.level != null && mc.screen == null && mc.isWindowActive();
     }
 
-    public static void reset() { gestures.clear(); useDown = false; }
+    public static void reset() { gestures.clear(); useDown = false; GuardNotice.clear(); }
 
     private static ClientConfig.Rule rule(KeyMapping key) {
         if (!playing()) return null;
@@ -116,26 +117,40 @@ public final class InputFilter {
         // A held eat/drink/charge/block input must never turn into an offhand light placement.
         if (hand == InteractionHand.OFF_HAND && !mc.player.getMainHandItem().isEmpty()
                 && (mc.player.getMainHandItem().getUseAnimation() != UseAnim.NONE
-                || mc.player.getMainHandItem().getFoodProperties(mc.player) != null)) return true;
+                || mc.player.getMainHandItem().getFoodProperties(mc.player) != null)) {
+            notice(value, "holdmytorch.torch", "holdmytorch.notice.offhand");
+            return true;
+        }
         update(value);
         boolean click = value.confirmation.consumeClick();
-        return !click && !value.confirmation.isDown();
+        boolean blocked = !click && !value.confirmation.isDown();
+        if (blocked) notice(value, "holdmytorch.torch", !value.down && useDown ? "holdmytorch.notice.repress" : null);
+        else GuardNotice.clear("holdmytorch.torch");
+        return blocked;
     }
 
     public static void raw(KeyMapping key, boolean down) {
         Gesture value = gesture(key);
-        if (value != null) { value.down = down; update(value); }
+        if (value != null) {
+            if (down && !value.down) value.notified = false;
+            value.down = down; update(value);
+        }
         Minecraft mc = Minecraft.getInstance();
         if (mc != null && mc.options != null && key == mc.options.keyUse) {
             boolean rising = down && !useDown;
             useDown = down;
             Gesture torch = torchGesture();
             if (torch != null) {
+                if (rising) torch.notified = false;
                 // A changed hand/context while held must wait for a fresh physical press.
                 if (rising || !down) torch.down = down;
                 update(torch);
             }
         }
+    }
+
+    private static void notice(Gesture value, String action, String reason) {
+        if (!value.notified) { GuardNotice.show(action, value.rule, reason); value.notified = true; }
     }
 
     private static void update(Gesture value) {
@@ -155,18 +170,25 @@ public final class InputFilter {
     }
 
     /** null leaves the original key mapping untouched, including GUI behavior. */
-    public static Boolean consume(KeyMapping key) {
+    public static Boolean consume(KeyMapping key, int originalClicks) {
         Gesture value = gesture(key);
         if (value == null) return null;
         update(value);
-        return value.confirmation.consumeClick() && key.isConflictContextAndModifierActive();
+        boolean active = key.isConflictContextAndModifierActive();
+        boolean allowed = value.confirmation.consumeClick() && active;
+        if (!allowed && active && (value.down || originalClicks > 0)) notice(value, key.getName(), null);
+        if (allowed) GuardNotice.clear(key.getName());
+        return allowed;
     }
 
     public static boolean down(KeyMapping key, boolean original) {
         Gesture value = gesture(key);
         if (value == null) return original;
         update(value);
-        return original && value.confirmation.isDown();
+        boolean allowed = original && value.confirmation.isDown();
+        if (original && !allowed) notice(value, key.getName(), null);
+        if (allowed) GuardNotice.clear(key.getName());
+        return allowed;
     }
 
     public static void tick() {

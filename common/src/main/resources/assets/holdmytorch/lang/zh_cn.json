@@ -29,5 +29,11 @@
   "holdmytorch.save_failed": "保存失败，请查看游戏日志；修改仍保留在内存中。",
   "holdmytorch.number_hint": "红色输入无效，不会应用；保留最后一个有效值。",
   "holdmytorch.unsupported_toggle": "暂不支持切换型快捷键；此快捷键不受保护。",
-  "holdmytorch.main_hand": "保护主手高亮物品"
+  "holdmytorch.main_hand": "保护主手高亮物品",
+  "holdmytorch.notice.blocked": "已拦截：%s",
+  "holdmytorch.notice.hold": "按住 %s 秒确认",
+  "holdmytorch.notice.double": "在 %s 毫秒内再按一次确认",
+  "holdmytorch.notice.confirm": "同时按住 %s 确认",
+  "holdmytorch.notice.offhand": "主手使用优先；换下主手物品后再放置",
+  "holdmytorch.notice.repress": "请先松开，再重新按下确认"
 }

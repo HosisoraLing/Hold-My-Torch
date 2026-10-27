@@ -7,6 +7,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.common.MinecraftForge;
 
 @Mod("holdmytorch")
@@ -17,6 +18,7 @@ public final class ForgeMod {
             ClientConfig.load(FMLPaths.CONFIGDIR.get());
             LightSources.discover();
             MinecraftForge.EVENT_BUS.addListener(Client::input);
+            MinecraftForge.EVENT_BUS.addListener(Client::render);
             ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
                     () -> new ConfigScreenHandler.ConfigScreenFactory((mc, parent) -> new ConfigScreen(parent)));
         }
@@ -26,5 +28,6 @@ public final class ForgeMod {
                 event.setSwingHand(false);
             }
         }
+        static void render(RenderGuiEvent.Post event) { GuardNotice.render(event.getGuiGraphics()); }
     }
 }

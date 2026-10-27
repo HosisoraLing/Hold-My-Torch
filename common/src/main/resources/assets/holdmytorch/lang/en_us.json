@@ -29,5 +29,11 @@
   "holdmytorch.save_failed": "Save failed. Check the game log; changes are still in memory.",
   "holdmytorch.number_hint": "Red input is invalid and is not applied. The last valid value is kept.",
   "holdmytorch.unsupported_toggle": "Toggle key mappings are not supported. No protection is applied.",
-  "holdmytorch.main_hand": "Protect main-hand bright items"
+  "holdmytorch.main_hand": "Protect main-hand bright items",
+  "holdmytorch.notice.blocked": "Blocked: %s",
+  "holdmytorch.notice.hold": "Hold for %s seconds to confirm",
+  "holdmytorch.notice.double": "Press again within %s ms to confirm",
+  "holdmytorch.notice.confirm": "Hold %s at the same time to confirm",
+  "holdmytorch.notice.offhand": "Main-hand use takes priority. Switch the main-hand item to place.",
+  "holdmytorch.notice.repress": "Release, then press again to confirm."
 }

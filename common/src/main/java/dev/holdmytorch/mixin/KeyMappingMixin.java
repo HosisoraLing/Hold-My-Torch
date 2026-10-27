@@ -25,7 +25,7 @@ public abstract class KeyMappingMixin {
 
     @Inject(method = "consumeClick", at = @At("HEAD"), cancellable = true)
     private void holdmytorch$click(CallbackInfoReturnable<Boolean> cir) {
-        Boolean result = InputFilter.consume((KeyMapping) (Object) this);
+        Boolean result = InputFilter.consume((KeyMapping) (Object) this, clickCount);
         if (result != null) {
             clickCount = 0; // Drain OS repeat and blocked clicks; only the gesture emits a click.
             cir.setReturnValue(result);
