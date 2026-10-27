@@ -7,6 +7,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ToggleKeyMapping;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.phys.BlockHitResult;
@@ -15,6 +16,7 @@ import org.lwjgl.glfw.GLFW;
 
 public final class InputFilter {
     private static final Map<String, Gesture> gestures = new HashMap<>();
+    private static boolean useDown;
     private static final class Gesture {
         final Confirmation confirmation = new Confirmation();
         final ClientConfig.Rule rule;
@@ -28,7 +30,7 @@ public final class InputFilter {
         return mc != null && mc.player != null && mc.level != null && mc.screen == null && mc.isWindowActive();
     }
 
-    public static void reset() { gestures.clear(); }
+    public static void reset() { gestures.clear(); useDown = false; }
 
     private static ClientConfig.Rule rule(KeyMapping key) {
         if (!playing()) return null;
@@ -39,28 +41,23 @@ public final class InputFilter {
         if (custom != null && custom.enabled) return custom;
         Minecraft mc = Minecraft.getInstance();
         if (key == mc.options.keyDrop && config.drop.enabled) return config.drop;
-        if (key == mc.options.keyUse && config.torch.enabled && placementCandidate()) return config.torch;
         return null;
     }
 
-    public static boolean placementCandidate() {
+    private static boolean placementCandidate(InteractionHand hand) {
         Minecraft mc = Minecraft.getInstance();
         if (!(mc.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK || mc.player.isSpectator()) return false;
-        boolean mainLight = LightSources.protectedItem(mc.player.getMainHandItem());
-        boolean offLight = LightSources.protectedItem(mc.player.getOffhandItem());
-        if (!mainLight && !offLight) return false;
-        // Main-hand food, drinks and other sustained uses precede the offhand in vanilla.
-        // Do not let an offhand torch block starting or continuing these actions.
-        if (!mainLight && (mc.player.isUsingItem()
-                || mc.player.getMainHandItem().getUseAnimation() != UseAnim.NONE)) return false;
+        if (!LightSources.protectedItem(mc.player.getItemInHand(hand))) return false;
+        // A non-light main hand already had its chance to interact with this block.
+        // Never bypass offhand protection just because that interaction returned PASS.
+        if (hand == InteractionHand.OFF_HAND) return true;
         if (mc.player.isSecondaryUseActive()) return true;
         Block block = mc.level.getBlockState(hit.getBlockPos()).getBlock();
         // Let modded block interactions run normally, including inherited implementations.
         if (!BuiltInRegistries.BLOCK.getKey(block).getNamespace().equals("minecraft"))
             return !BlockInteractions.hasOverride(block.getClass());
         // A custom BlockItem may implement onItemUseFirst before block interaction.
-        if ((mainLight && !BuiltInRegistries.ITEM.getKey(mc.player.getMainHandItem().getItem()).getNamespace().equals("minecraft"))
-                || (offLight && !BuiltInRegistries.ITEM.getKey(mc.player.getOffhandItem().getItem()).getNamespace().equals("minecraft"))) return true;
+        if (!BuiltInRegistries.ITEM.getKey(mc.player.getItemInHand(hand).getItem()).getNamespace().equals("minecraft")) return true;
         // Do not call use/useItemOn speculatively: those methods can mutate the world.
         Class<?> type = block.getClass();
         return !((type == DoorBlock.class && block != Blocks.IRON_DOOR)
@@ -86,9 +83,11 @@ public final class InputFilter {
 
     private static Gesture gesture(KeyMapping key) {
         ClientConfig.Rule rule = rule(key);
-        String name = key.getName();
+        return gesture(key.getName(), rule, rule == null ? null : context(key));
+    }
+
+    private static Gesture gesture(String name, ClientConfig.Rule rule, String context) {
         if (rule == null) { gestures.remove(name); return null; }
-        String context = context(key);
         Gesture value = gestures.get(name);
         if (value == null || value.rule != rule || !value.context.equals(context)) {
             value = new Gesture(rule, context);
@@ -97,9 +96,45 @@ public final class InputFilter {
         return value;
     }
 
+    private static Gesture torchGesture() {
+        if (!playing()) return null;
+        Minecraft mc = Minecraft.getInstance();
+        ClientConfig config = ClientConfig.current;
+        ClientConfig.Rule custom = config.customEnabled ? config.keys.get(mc.options.keyUse.getName()) : null;
+        boolean enabled = config.torch.enabled && (custom == null || !custom.enabled)
+                && (LightSources.protectedItem(mc.player.getMainHandItem())
+                || LightSources.protectedItem(mc.player.getOffhandItem()));
+        return gesture("holdmytorch:torch", enabled ? config.torch : null, context(mc.options.keyUse));
+    }
+
+    /** Filter the loader's per-hand input event, before that hand can interact or send use packets. */
+    public static boolean blockUse(InteractionHand hand) {
+        Gesture value = torchGesture();
+        if (value == null || !placementCandidate(hand)) return false;
+        Minecraft mc = Minecraft.getInstance();
+        // A held eat/drink/charge/block input must never turn into an offhand light placement.
+        if (hand == InteractionHand.OFF_HAND && !mc.player.getMainHandItem().isEmpty()
+                && (mc.player.getMainHandItem().getUseAnimation() != UseAnim.NONE
+                || mc.player.getMainHandItem().getFoodProperties(mc.player) != null)) return true;
+        update(value);
+        boolean click = value.confirmation.consumeClick();
+        return !click && !value.confirmation.isDown();
+    }
+
     public static void raw(KeyMapping key, boolean down) {
         Gesture value = gesture(key);
         if (value != null) { value.down = down; update(value); }
+        Minecraft mc = Minecraft.getInstance();
+        if (mc != null && mc.options != null && key == mc.options.keyUse) {
+            boolean rising = down && !useDown;
+            useDown = down;
+            Gesture torch = torchGesture();
+            if (torch != null) {
+                // A changed hand/context while held must wait for a fresh physical press.
+                if (rising || !down) torch.down = down;
+                update(torch);
+            }
+        }
     }
 
     private static void update(Gesture value) {
@@ -135,5 +170,6 @@ public final class InputFilter {
 
     public static void tick() {
         if (!playing()) reset();
+        else torchGesture(); // Invalidate confirmation when either hand changes, even mid-use.
     }
 }
