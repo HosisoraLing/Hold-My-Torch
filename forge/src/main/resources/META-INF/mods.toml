@@ -3,7 +3,7 @@ loaderVersion="[47,)"
 license="AGPL-3.0-only"
 [[mods]]
 modId="holdmytorch"
-version="0.1.1"
+version="0.1.2"
 displayName="Hold My Torch!"
 displayTest="IGNORE_ALL_VERSION"
 description='''Client-side input confirmation for bright placeable items, dropping and registered key mappings.'''

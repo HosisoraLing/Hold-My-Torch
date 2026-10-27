@@ -7,6 +7,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ToggleKeyMapping;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -45,16 +46,21 @@ public final class InputFilter {
     public static boolean placementCandidate() {
         Minecraft mc = Minecraft.getInstance();
         if (!(mc.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK || mc.player.isSpectator()) return false;
-        if (!LightSources.protectedItem(mc.player.getMainHandItem())
-                && !LightSources.protectedItem(mc.player.getOffhandItem())) return false;
+        boolean mainLight = LightSources.protectedItem(mc.player.getMainHandItem());
+        boolean offLight = LightSources.protectedItem(mc.player.getOffhandItem());
+        if (!mainLight && !offLight) return false;
+        // Main-hand food, drinks and other sustained uses precede the offhand in vanilla.
+        // Do not let an offhand torch block starting or continuing these actions.
+        if (!mainLight && (mc.player.isUsingItem()
+                || mc.player.getMainHandItem().getUseAnimation() != UseAnim.NONE)) return false;
         if (mc.player.isSecondaryUseActive()) return true;
         Block block = mc.level.getBlockState(hit.getBlockPos()).getBlock();
         // Let modded block interactions run normally, including inherited implementations.
         if (!BuiltInRegistries.BLOCK.getKey(block).getNamespace().equals("minecraft"))
             return !BlockInteractions.hasOverride(block.getClass());
         // A custom BlockItem may implement onItemUseFirst before block interaction.
-        if ((LightSources.protectedItem(mc.player.getMainHandItem()) && !BuiltInRegistries.ITEM.getKey(mc.player.getMainHandItem().getItem()).getNamespace().equals("minecraft"))
-                || (LightSources.protectedItem(mc.player.getOffhandItem()) && !BuiltInRegistries.ITEM.getKey(mc.player.getOffhandItem().getItem()).getNamespace().equals("minecraft"))) return true;
+        if ((mainLight && !BuiltInRegistries.ITEM.getKey(mc.player.getMainHandItem().getItem()).getNamespace().equals("minecraft"))
+                || (offLight && !BuiltInRegistries.ITEM.getKey(mc.player.getOffhandItem().getItem()).getNamespace().equals("minecraft"))) return true;
         // Do not call use/useItemOn speculatively: those methods can mutate the world.
         Class<?> type = block.getClass();
         return !((type == DoorBlock.class && block != Blocks.IRON_DOOR)
